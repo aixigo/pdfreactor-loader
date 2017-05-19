@@ -59,12 +59,11 @@ module.exports = function (source) {
       pdfconfig.setDocument( source );
 
       pipe( [
-         ( callback ) => { portfinder.getPort( callback ); },
+         ( callback ) => {
+            listen( server, callback );
+         },
          ( port, callback ) => {
             pdfconfig.setBaseURL( 'http://127.0.0.1:' + port );
-            server.listen( port, callback );
-         },
-         ( callback ) => {
             pdfrenderer.convertAsBinary( pdfconfig, callback );
          },
          ( bytes, callback ) => {
@@ -76,6 +75,27 @@ module.exports = function (source) {
       } );
    } );
 };
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function listen( server, callback ) {
+   let tries = 3;
+
+   repeat();
+
+   function repeat() {
+      portfinder.getPort( port => {
+         server.listen( port, err => {
+            if (err && tries-- > 0) {
+               setTimeout( repeat, 100 + (Math.random() * 100) );
+            }
+            else {
+               callback(err, port);
+            }
+         } );
+      } );
+   }
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
