@@ -51,6 +51,15 @@ module.exports = { /* webpack config here */ };
   You probably need to [set your classpath](#java-classpath-and-setup) correctly. The loader does not bring
   its own `pdfreactor.jar`, so you have to make sure you have a local copy.
 
+- **Webpack just stops while processing the loader!**
+
+  Due to the way the Java binding works, it might happen that it consumes all threads in the UV threadpool
+  when waiting for something to be returned by the JavaScript side, especially when webpack loads multiple
+  modules with this loader at the same time. Now, if the JavaScript is starting an asynchronous operation
+  it will be queued indefinitely because there are no threads left.
+
+  To work around this, you can export `UV_THREADPOOL_SIZE` to be larger than the default size "4".
+
 - **Why?**
 
   Webpack is great for HTML, CSS and JavaScript. _PDFreactor_ is great for producing PDF from those.
