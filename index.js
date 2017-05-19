@@ -84,15 +84,20 @@ function listen( server, callback ) {
    repeat();
 
    function repeat() {
-      portfinder.getPort( port => {
-         server.listen( port, err => {
-            if (err && tries-- > 0) {
-               setTimeout( repeat, 100 + (Math.random() * 100) );
-            }
-            else {
-               callback(err, port);
-            }
-         } );
+      portfinder.getPort( (err, port) => {
+         if (err) {
+            callback(err);
+         }
+         else {
+            server.listen( port, err => {
+               if (err && tries-- > 0) {
+                  setTimeout( repeat, 100 + (Math.random() * 100) );
+               }
+               else {
+                  callback(err, port);
+               }
+            } );
+         }
       } );
    }
 }
