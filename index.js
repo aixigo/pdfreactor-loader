@@ -54,6 +54,7 @@ module.exports = function (source) {
       } );
 
       pdfconfig.setEnableDebugModeSync( true );
+      pdfconfig.setJavaScriptModeSync( java.import( CONFIGURATION ).JavaScriptMode.ENABLED );
       pdfconfig.setAddLinks( true );
       pdfconfig.setAddBookmarks( true );
       pdfconfig.setDocument( source );
