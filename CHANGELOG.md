@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v0.2.0
+
 - JavaScript is now enabled during rendering
 
 

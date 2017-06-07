@@ -1,6 +1,6 @@
 {
   "name": "pdfreactor-loader",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Render HTML to PDF with PdfReactor",
   "main": "index.js",
   "repository": "git@github.com:aixigo/pdfreactor-loader.git",
