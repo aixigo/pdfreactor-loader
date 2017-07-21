@@ -17,6 +17,10 @@ const LOGGER = 'java.util.logging.Logger';
 const LOGGING_HANDLER = 'com.aixigo.pdfreactor_loader.LoggingHandler';
 const LOG_WRITER = 'com.aixigo.pdfreactor_loader.LogWriter';
 
+if( !java.isJvmCreated() ) {
+   java.classpath.push( ...require( './classpath' ) );
+}
+
 module.exports = function( source ) {
    const options = loaderUtils.getOptions( this ) || {};
    const classpath = Array.isArray( options.classpath ) ? options.classpath : [ options.classpath ];
@@ -27,11 +31,9 @@ module.exports = function( source ) {
    if( !java.isJvmCreated() ) {
       java.options.push('-Djava.awt.headless=true');
       java.registerClient( () => {
-         classpath.forEach( cp => {
-            if( cp ) {
-               java.classpath.push( path.resolve( this.context, cp ) );
-            }
-         } );
+         java.classpath.push(
+            ...classpath.filter( cp => !!cp ).map( cp => path.resolve( this.context, cp ) )
+         );
       } );
    }
 
@@ -56,7 +58,22 @@ module.exports = function( source ) {
          } );
       } );
 
-      pdfConfig.setLoggerSync( createLogger() );
+      try {
+         pdfConfig.setLoggerSync( createLogger() );
+      }
+      catch( e ) {
+         /* eslint-disable no-console */
+         console.warn( `-----------------------------------------------------------
+   pdfreactor-loader: Failed to create and set logger.
+   Most probably the reason for this are missing classpath entries for the java classes of this module.
+   This can happen, if the jvm was already running before this module was loaded.
+   You can fix this manually by adding the entries yourself:
+   
+      java.classpath.push( ...require( 'pdfreactor-loader/classpath' ) );
+-----------------------------------------------------------` );
+         console.info( '   Underlying Exception:', e );
+         /* eslint-enable no-console */
+      }
       pdfConfig.setLogLevelSync( java.import( CONFIGURATION ).LogLevel.DEBUG );
       pdfConfig.setEnableDebugModeSync( true );
       pdfConfig.setJavaScriptModeSync( java.import( CONFIGURATION ).JavaScriptMode.ENABLED );
@@ -84,24 +101,23 @@ module.exports = function( source ) {
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    function createLogger() {
+      const logger = java.import( LOGGER ).getLoggerSync( 'pdfreactor' );
+      if( logger.getHandlersSync().some( h => java.instanceOf( h, LOGGING_HANDLER ) ) ) {
+         // The handler was already created and added in a previous run
+         return logger;
+      }
+
+      // The parent handler would simply print the log messages to console without proper formatting.
+      // Hence we disable it.
       const loggingHandler = java.newInstanceSync( LOGGING_HANDLER );
       const logWriter = java.newProxy( LOG_WRITER, createLogWriter() );
       loggingHandler.setLogWriterSync( logWriter );
 
-      const logger = java.import( LOGGER ).getLoggerSync( 'pdfreactor' );
-      // The parent handler would simply print the log messages to console without proper formatting.
-      // Hence we disable it.
       logger.setUseParentHandlers( false );
       logger.addHandlerSync( loggingHandler );
       logger.setLevelSync( java.import( LEVEL ).FINEST );
       return logger;
    }
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-module.exports.classpathEntries = function() {
-   return [ `${__dirname}/java` ];
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////

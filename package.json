@@ -7,7 +7,7 @@
   "author": "Jonas Pommerening <jonas.pommerening@gmail.com>",
   "license": "MIT",
   "scripts": {
-     "test": "eslint index.js lib/"
+     "test": "eslint index.js classpath.js lib/"
   },
   "dependencies": {
     "colors": "^1.1.2",
