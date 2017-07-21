@@ -42,7 +42,7 @@ module.exports = function( source ) {
       const pdfRenderer = java.newInstanceSync( PDF_REACTOR );
 
       const server = http.createServer( ( req, res ) => {
-         const resource = path.join( this.context, req.url.substr( 1 ) );
+         const resource = path.resolve( this.context, '..', req.url.substr( 1 ) );
          this.addDependency( resource );
          this.fs.readFile( resource, ( err, content ) => {
             if( err ) {
