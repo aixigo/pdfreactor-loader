@@ -39,7 +39,8 @@ if( !java.isJvmCreated() ) {
 
 module.exports = function( source ) {
    const options = loaderUtils.getOptions( this ) || {};
-   const context = this.options.root || this.context;
+   const context = options.context || this.options.context || this.context;
+   const server = createServer( this.options.server || {} );
    const classpath = Array.isArray( options.classpath ) ? options.classpath : [ options.classpath ];
    const hash = crypto.createHash( 'sha256' );
 
@@ -64,7 +65,7 @@ module.exports = function( source ) {
    java.ensureJvm( () => {
       const pdfConfig = java.newInstanceSync( CONFIGURATION );
       const pdfRenderer = java.newInstanceSync( PDF_REACTOR );
-      const loaderNonce = hash.digest( 'base64' );
+      const loaderNonce = hash.digest( BASE64 );
 
       const requestHandler = ( req, res, next ) => {
          if( req.headers[ NONCE_HEADER.toLowerCase() ] === loaderNonce ) {
@@ -85,8 +86,6 @@ module.exports = function( source ) {
             next();
          }
       };
-
-      const server = createServer( this.server || {} );
 
       pipe( [
          callback => {

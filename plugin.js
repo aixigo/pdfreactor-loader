@@ -14,9 +14,12 @@ module.exports = function( options ) {
 
    return {
       apply( compiler ) {
+         const fs = compiler.inputFileSystem;
+         const context = options && options.context || compiler.context;
+
          compiler.plugin( 'after-environment', () => {
-            server.use( requestHandler( compiler ) );
-            server.use( createApp( options || {} ) );
+            server.use( requestHandler( fs, context ) );
+            server.use( createApp( options ) );
          } );
          compiler.plugin( 'watch-run', ( watcher, callback ) => {
             server.listen( err => {
@@ -38,7 +41,11 @@ module.exports = function( options ) {
          compiler.plugin( 'compilation', compilation => {
             compilation.plugin( 'normal-module-loader', ( loaderContext, module ) => {
                if( module.loaders.some( obj => obj.loader === loaderPath ) ) {
-                  loaderContext.server = server;
+                  loaderContext.options = Object.assign(
+                     loaderContext.options || {},
+                     options,
+                     { server, context }
+                  );
                }
             } );
          } );
@@ -46,10 +53,7 @@ module.exports = function( options ) {
    };
 };
 
-function requestHandler( compiler ) {
-   const fs = compiler.inputFileSystem;
-   const context = compiler.context;
-
+function requestHandler( fs, context ) {
    return ( req, res, next ) => {
       const resource = path.resolve( context, req.url.replace( /^\//, '' ) );
       fs.readFile( resource, ( err, content ) => {
