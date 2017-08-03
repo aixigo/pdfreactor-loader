@@ -5,6 +5,7 @@
  */
 const path = require( 'path' );
 const java = require( 'java' );
+const http = require( 'http' );
 const crypto = require( 'crypto' );
 const loaderUtils = require( 'loader-utils' );
 const createLogWriter = require( './lib/log-writer' );
@@ -20,7 +21,7 @@ const LOGGING_HANDLER = 'com.aixigo.pdfreactor_loader.LoggingHandler';
 const LOG_WRITER = 'com.aixigo.pdfreactor_loader.LogWriter';
 
 const NONCE_HEADER = 'X-PDFreactor-Loader-Nonce';
-const LOGGER_ERROR_MESSAGE = (
+const LOGGER_ERROR_MESSAGE = ( // eslint-disable-next-line indent
 `-----------------------------------------------------------
    pdfreactor-loader: Failed to create and set logger.
    Most probably the reason for this are missing classpath entries for the java classes of this module.
@@ -37,9 +38,12 @@ if( !java.isJvmCreated() ) {
 
 module.exports = function( source ) {
    const options = loaderUtils.getOptions( this ) || {};
+   const context = this.options.root || this.context;
    const classpath = Array.isArray( options.classpath ) ? options.classpath : [ options.classpath ];
    const hash = crypto.createHash( 'sha256' );
 
+   hash.update( source );
+   hash.update( context );
    hash.update( this.request );
 
    this.cacheable();
@@ -62,22 +66,12 @@ module.exports = function( source ) {
       const loaderNonce = hash.digest( 'base64' );
 
       const requestHandler = ( req, res, next ) => {
-         // TODO: url -?-> resource
          if( req.headers[ NONCE_HEADER.toLowerCase() ] === loaderNonce ) {
-            const resource = path.resolve( this.context, '..', req.url.substr( 1 ) );
+            const resource = path.resolve( context, req.url.substr( 1 ) );
             this.addDependency( resource );
-         }
-         next();
-      };
-      const fileSystemServer = ( req, res, next ) => {
-         if( req.headers[ NONCE_HEADER.toLowerCase() ] === loaderNonce ) {
-            const resource = path.resolve( this.context, req.url.substr( 1 ) );
-
             this.fs.readFile( resource, ( err, content ) => {
                if( err ) {
-                  res.statusCode = 404;
-                  res.statusMessage = 'Not found';
-                  res.end( err.message );
+                  next();
                   return;
                }
 
@@ -91,7 +85,7 @@ module.exports = function( source ) {
          }
       };
 
-      const server = this.server || createServer( {} );
+      const server = createServer( this.server || {} );
 
       pipe( [
          callback => {
@@ -112,17 +106,9 @@ module.exports = function( source ) {
             pdfConfig.setDocumentSync( source );
             pdfConfig.setRequestHeadersSync(
                java.newInstanceSync( KEY_VALUE_PAIR, NONCE_HEADER, loaderNonce ) );
-            callback();
-         },
-         callback => {
+
             server.use( requestHandler );
-            if( server !== this.server ) {
-               server.use( fileSystemServer );
-               server.listen( callback );
-            }
-            else {
-               callback();
-            }
+            server.listen( callback );
          },
          callback => {
             const address = server.address();
@@ -130,20 +116,31 @@ module.exports = function( source ) {
             pdfRenderer.convertAsBinary( pdfConfig, callback );
          },
          ( bytes, callback ) => {
-            callback( null, Buffer.from( bytes ) );
+            const buffer = Buffer.from( bytes );
+            const encoding = 'base64';
+            const entry = {
+               name: path.basename( this.resourcePath, path.extname( this.resourcePath ) ),
+               time: Date.now(),
+               nonce: loaderNonce,
+               data: [
+                  {
+                     type: 'application/pdf',
+                     encoding: encoding,
+                     data: buffer.toString( encoding )
+                  },
+                  {
+                     type: 'text/html',
+                     encoding: encoding,
+                     data: Buffer.from( source ).toString( encoding )
+                  }
+               ]
+            };
+
+            postResult( server.address(), entry, err => callback( err, buffer ) );
          }
       ], ( err, buffer ) => {
          this.callback( err, buffer );
-         server.unuse( requestHandler );
-
-         if( server !== this.server ) {
-            server.close();
-         }
-         else {
-            const name = path.basename( this.resourcePath, path.extname( this.resourcePath ) );
-            server.registerSource( name + '.html', source );
-            server.registerSource( name + '.pdf', buffer );
-         }
+         server.close();
       } );
    } );
 
@@ -151,10 +148,10 @@ module.exports = function( source ) {
 
    function createLogger() {
       const logger = java.import( LOGGER ).getLoggerSync( 'pdfreactor' );
-      //if( logger.getHandlersSync().some( h => java.instanceOf( h, LOGGING_HANDLER ) ) ) {
+      if( logger.getHandlersSync().some( h => java.instanceOf( h, LOGGING_HANDLER ) ) ) {
          // The handler was already created and added in a previous run
          return logger;
-      //}
+      }
 
       // The parent handler would simply print the log messages to console without proper formatting.
       // Hence we disable it.
@@ -190,4 +187,19 @@ function pipe( fns, callback ) {
    }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+function postResult( address, entry, callback ) {
+   const req = http.request( {
+      method: 'POST',
+      port: address.port,
+      family: address.family,
+      path: '/',
+      headers: {
+         'content-type': 'application/json'
+      }
+   }, () => callback( null ) );
+   req.on( 'error', callback );
+   req.write( JSON.stringify( entry ) );
+   req.end();
+}
