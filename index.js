@@ -12,6 +12,7 @@ const createLogWriter = require( './lib/log-writer' );
 const createServer = require( './lib/server' );
 const PdfReactorServerPlugin = require( './plugin' );
 
+const BASE64 = 'base64';
 const CONFIGURATION = 'com.realobjects.pdfreactor.Configuration';
 const KEY_VALUE_PAIR = CONFIGURATION + '$KeyValuePair';
 const PDF_REACTOR = 'com.realobjects.pdfreactor.PDFreactor';
@@ -117,7 +118,6 @@ module.exports = function( source ) {
          },
          ( bytes, callback ) => {
             const buffer = Buffer.from( bytes );
-            const encoding = 'base64';
             const entry = {
                name: path.basename( this.resourcePath, path.extname( this.resourcePath ) ),
                time: Date.now(),
@@ -125,13 +125,13 @@ module.exports = function( source ) {
                data: [
                   {
                      type: 'application/pdf',
-                     encoding: encoding,
-                     data: buffer.toString( encoding )
+                     encoding: BASE64,
+                     data: buffer.toString( BASE64 )
                   },
                   {
                      type: 'text/html',
-                     encoding: encoding,
-                     data: Buffer.from( source ).toString( encoding )
+                     encoding: BASE64,
+                     data: Buffer.from( source ).toString( BASE64 )
                   }
                ]
             };
