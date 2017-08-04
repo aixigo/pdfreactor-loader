@@ -8,7 +8,6 @@ const java = require( 'java' );
 const http = require( 'http' );
 const crypto = require( 'crypto' );
 const loaderUtils = require( 'loader-utils' );
-const createLogWriter = require( './lib/log-writer' );
 const createServer = require( './lib/server' );
 const PdfReactorServerPlugin = require( './plugin' );
 
@@ -19,7 +18,7 @@ const PDF_REACTOR = 'com.realobjects.pdfreactor.PDFreactor';
 const LEVEL = 'java.util.logging.Level';
 const LOGGER = 'java.util.logging.Logger';
 const LOGGING_HANDLER = 'com.aixigo.pdfreactor_loader.LoggingHandler';
-const LOG_WRITER = 'com.aixigo.pdfreactor_loader.LogWriter';
+const DEFAULT_LOG_WRITER = 'com.aixigo.pdfreactor_loader.DefaultLogWriter';
 
 const NONCE_HEADER = 'X-PDFreactor-Loader-Nonce';
 const LOGGER_ERROR_MESSAGE = ( // eslint-disable-next-line indent
@@ -34,7 +33,12 @@ const LOGGER_ERROR_MESSAGE = ( // eslint-disable-next-line indent
 );
 
 if( !java.isJvmCreated() ) {
-   java.classpath.push( ...require( './classpath' ) );
+   java.registerClient( () => {
+      const classpath = require( './classpath' );
+      classpath.forEach( cp => {
+         java.classpath.push( cp );
+      } );
+   } );
 }
 
 module.exports = function( source ) {
@@ -101,7 +105,7 @@ module.exports = function( source ) {
          },
          ( licenseKey, callback ) => {
             try {
-               //pdfConfig.setLoggerSync( createLogger() );
+               pdfConfig.setLoggerSync( provideLogger() );
             }
             catch( e ) {
                /* eslint-disable no-console */
@@ -157,30 +161,35 @@ module.exports = function( source ) {
          server.close();
       } );
    } );
-
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-   function createLogger() {
-      const logger = java.import( LOGGER ).getLoggerSync( 'pdfreactor' );
-      if( logger.getHandlersSync().some( h => java.instanceOf( h, LOGGING_HANDLER ) ) ) {
-         // The handler was already created and added in a previous run
-         return logger;
-      }
-
-      // The parent handler would simply print the log messages to console without proper formatting.
-      // Hence we disable it.
-      const loggingHandler = java.newInstanceSync( LOGGING_HANDLER );
-      const logWriter = java.newProxy( LOG_WRITER, createLogWriter() );
-      loggingHandler.setLogWriterSync( logWriter );
-
-      logger.setUseParentHandlers( false );
-      logger.addHandlerSync( loggingHandler );
-      logger.setLevelSync( java.import( LEVEL ).FINEST );
-      return logger;
-   }
 };
 
 module.exports.plugin = PdfReactorServerPlugin;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let isLoggerConfigured = false;
+function provideLogger() {
+   const logger = java.import( LOGGER ).getLoggerSync( 'pdfreactor' );
+   if( !isLoggerConfigured ) {
+      configureLogger( logger );
+      isLoggerConfigured = true;
+   }
+   return logger;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function configureLogger( logger ) {
+   // The parent handler would simply print the log messages to console without proper formatting.
+   // Hence we disable it.
+   const loggingHandler = java.newInstanceSync( LOGGING_HANDLER );
+   const logWriter = java.newInstanceSync( DEFAULT_LOG_WRITER );
+   loggingHandler.setLogWriterSync( logWriter );
+
+   logger.setUseParentHandlersSync( false );
+   logger.addHandlerSync( loggingHandler );
+   logger.setLevelSync( java.import( LEVEL ).FINEST );
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
