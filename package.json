@@ -1,13 +1,15 @@
 {
   "name": "pdfreactor-loader",
   "version": "0.2.0",
-  "description": "Render HTML to PDF with PdfReactor",
+  "description": "Render HTML to PDF with PDFreactor",
   "main": "index.js",
   "repository": "git@github.com:aixigo/pdfreactor-loader.git",
   "author": "Jonas Pommerening <jonas.pommerening@gmail.com>",
   "license": "MIT",
   "scripts": {
-     "test": "eslint index.js classpath.js plugin.js lib/"
+     "pretest": "test -f test/pdfreactor.jar || ( curl -Lo test/pdfreactor.zip 'http://www.pdfreactor.com/download/get/?product=pdfreactor&type=library&jre=false' && unzip -n -d test test/pdfreactor.zip pdfreactor.jar )",
+     "test": "mocha",
+     "posttest": "eslint index.js classpath.js plugin.js lib/ test/"
   },
   "dependencies": {
     "colors": "^1.1.2",
@@ -17,8 +19,10 @@
     "java": "^0.8.0"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
     "eslint": "^4.2.0",
     "eslint-config-laxarjs": "^2.0.0",
-    "java": "^0.8.0"
+    "java": "^0.8.0",
+    "mocha": "^3.3.0"
   }
 }

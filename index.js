@@ -105,7 +105,7 @@ module.exports = function( source ) {
             pdfConfig.setJavaScriptModeSync( java.import( CONFIGURATION ).JavaScriptMode.ENABLED );
             pdfConfig.setAddLinksSync( true );
             pdfConfig.setAddBookmarksSync( true );
-            pdfConfig.setDocumentSync( source );
+            pdfConfig.setDocumentSync( source.toString() );
             pdfConfig.setRequestHeadersSync(
                java.newInstanceSync( KEY_VALUE_PAIR, NONCE_HEADER, loaderNonce ) );
 

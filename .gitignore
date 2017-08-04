@@ -1,2 +1,4 @@
 /node_modules
 *.jar
+*.zip
+hs_err*.log

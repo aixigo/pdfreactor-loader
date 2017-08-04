@@ -14,17 +14,17 @@ module.exports = function( options ) {
 
    return {
       apply( compiler ) {
-         const context = options && options.context || compiler.context;
+         const context = ( options && options.context ) || compiler.context;
          const middleware = [];
 
          if( Array.isArray( options.middleware ) ) {
-            middleware.push.apply( middlware, options.middleware );
+            middleware.push.apply( middleware, options.middleware );
          }
-         else if( 'middlware' in options ) {
+         else if( 'middleware' in options ) {
             middleware.push( options.middleware );
          }
          else {
-            middlware.push( createApp( options ) );
+            middleware.push( createApp( options ) );
          }
 
          compiler.plugin( 'after-environment', () => {
