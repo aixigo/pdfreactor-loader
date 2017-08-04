@@ -14,6 +14,28 @@ import url from 'file-loader!pdfreactor-loader!./index.html';
 ```
 
 
+## License
+
+If you have a PDFreactor license, you can pass the path of the license file with the `?license` option.
+We recommend to store the path of the file in an environment variable and pass that to the loader inside the
+webpack configuration:
+
+```js
+// webpack.config.js
+module.exports = {
+   module: {
+      rules: [
+         {
+            test: /\.pdf\.html$/,
+            use: 'pdfreactor-loader',
+            options: { license: process.env.PDFREACTOR_LICENSE }
+         }
+      ]
+   }
+};
+```
+
+
 ## Rendering root
 
 By default, additional resources, such as external styles and images, will be resolved relative to the loaded

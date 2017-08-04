@@ -42,6 +42,7 @@ module.exports = function( source ) {
    const context = options.context ?
       path.resolve( this.context, options.context ) :
       ( this.options.context || this.context );
+   const license = options.license || this.options.license;
    const server = createServer( this.options.server || {} );
    const classpath = Array.isArray( options.classpath ) ? options.classpath : [ options.classpath ];
    const hash = crypto.createHash( 'sha256' );
@@ -91,6 +92,14 @@ module.exports = function( source ) {
 
       pipe( [
          callback => {
+            if( license ) {
+               require( 'fs' ).readFile( license, callback );
+            }
+            else {
+               callback( null, null );
+            }
+         },
+         ( licenseKey, callback ) => {
             try {
                //pdfConfig.setLoggerSync( createLogger() );
             }
@@ -108,6 +117,10 @@ module.exports = function( source ) {
             pdfConfig.setDocumentSync( source.toString() );
             pdfConfig.setRequestHeadersSync(
                java.newInstanceSync( KEY_VALUE_PAIR, NONCE_HEADER, loaderNonce ) );
+
+            if( licenseKey ) {
+               pdfConfig.setLicenseKeySync( licenseKey.toString() );
+            }
 
             server.use( requestHandler );
             server.listen( callback );
