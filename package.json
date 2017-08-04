@@ -7,12 +7,11 @@
   "author": "Jonas Pommerening <jonas.pommerening@gmail.com>",
   "license": "MIT",
   "scripts": {
-     "test": "eslint index.js classpath.js lib/"
+     "test": "eslint index.js classpath.js plugin.js lib/"
   },
   "dependencies": {
     "colors": "^1.1.2",
-    "loader-utils": "^1.1.0",
-    "portfinder": "^1.0.13"
+    "loader-utils": "^1.1.0"
   },
   "peerDependencies": {
     "java": "^0.8.0"
