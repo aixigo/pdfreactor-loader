@@ -3,7 +3,6 @@
  * Released under the MIT license.
  * https://opensource.org/licenses/MIT
  */
-const { bold } = require( 'colors/safe' );
 const path = require( 'path' );
 const createServer = require( './lib/server' );
 const createApp = require( './lib/app' );
@@ -36,7 +35,7 @@ module.exports = function( options ) {
                const baseUrl = `http://localhost:${server.address().port}/`;
                if( !err ) {
                   // eslint-disable-next-line no-console
-                  console.log( `PDFreactor server is running at ${bold( baseUrl )}` );
+                  console.log( `PDFreactor server is running at \u001b[1m${baseUrl}\u001b[0m` );
                }
                callback( err );
             } );
