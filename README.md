@@ -17,7 +17,14 @@ import url from 'file-loader!pdfreactor-loader!./index.html';
 
 By default, additional resources, such as external styles and images, will be resolved relative to the
 loaded resources – relative to `./index.html` in the example above. If that does not work for you, you
-can also pass the directory as an option to the loader with the `?context` option.
+can also pass the directory as an option to the loader with the `?context` option. If you pass a relative
+path to this option, it will be relative to the original context. When specifying the option inside the
+webpack configuration, it is usually a good idea to use an absolute path.
+
+```js
+// Render PDF, serve resource from ./pdf-root
+import pdfData from 'pdfreactor-loader?context=pdf-root!./index.html';
+```
 
 
 ## Built-in HTTP server
@@ -53,7 +60,7 @@ module.exports = {
 ## Java Classpath and Setup
 
 The loader supports a `?classpath` option to add items to the Java classpath. However, since it is not
-predictable _when_ the loader will be called the JVM might already be initialized. To alleviate this, it is
+predictable _when_ the loader will be called, the JVM might already be initialized. To alleviate this, it is
 recommended to supply any required Java options and classpath items in your webpack configuration, like so:
 
 ```js

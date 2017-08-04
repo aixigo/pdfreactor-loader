@@ -39,7 +39,9 @@ if( !java.isJvmCreated() ) {
 
 module.exports = function( source ) {
    const options = loaderUtils.getOptions( this ) || {};
-   const context = options.context || this.options.context || this.context;
+   const context = options.context ?
+      path.resolve( this.context, options.context ) :
+      ( this.options.context || this.context );
    const server = createServer( this.options.server || {} );
    const classpath = Array.isArray( options.classpath ) ? options.classpath : [ options.classpath ];
    const hash = crypto.createHash( 'sha256' );
