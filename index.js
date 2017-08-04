@@ -167,12 +167,10 @@ module.exports.plugin = PdfReactorServerPlugin;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let isLoggerConfigured = false;
 function provideLogger() {
    const logger = java.import( LOGGER ).getLoggerSync( 'pdfreactor' );
-   if( !isLoggerConfigured ) {
+   if( !logger.getHandlersSync().some( h => java.instanceOf( h, LOGGING_HANDLER ) ) ) {
       configureLogger( logger );
-      isLoggerConfigured = true;
    }
    return logger;
 }
