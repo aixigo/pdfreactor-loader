@@ -13,13 +13,14 @@ and produces a binary buffer containing the generated PDF document.
 import url from 'file-loader!pdfreactor-loader!./index.html';
 ```
 
+
 ## Rendering root
 
-By default, additional resources, such as external styles and images, will be resolved relative to the
-loaded resources – relative to `./index.html` in the example above. If that does not work for you, you
-can also pass the directory as an option to the loader with the `?context` option. If you pass a relative
-path to this option, it will be relative to the original context. When specifying the option inside the
-webpack configuration, it is usually a good idea to use an absolute path.
+By default, additional resources, such as external styles and images, will be resolved relative to the loaded
+resources – relative to `./index.html` in the example above. If that does not work for you, you can also pass
+the directory as an option to the loader with the `?context` option.
+If you pass a relative path to this option, it will be relative to the original context.  When specifying the
+option inside the webpack configuration, it is usually a good idea to use an absolute path.
 
 ```js
 // Render PDF, serve resource from ./pdf-root
@@ -30,27 +31,35 @@ import pdfData from 'pdfreactor-loader?context=pdf-root!./index.html';
 ## Built-in HTTP server
 
 To pass additional resources to the PDFreactor process, the loader starts a small HTTP server on the fly.
-Is serves files straight from webpack's in-memory file system and also takes care of tracking dependency
+It serves files straight from webpack's in-memory file system and also takes care of tracking dependency
 information and passing it back to the loader.
 The loader comes with a plugin that allows you to share the same server instance between multiple loader
-invocations. The plugin records loader invocations and comes with a simple web interface to inspect the
-input HTML and resulting PDF.
+invocations. The plugin records loader invocations and comes with a simple web interface to inspect the input
+HTML and resulting PDF.
 
-When using the shared server, the default rendering root changes to be root of the server.
-By default the server uses the webpack compilation context as root, but this can be changed with the
-plugin's `context` option:
+When using the shared server, the default rendering root changes to be root of the server.  By default the
+server uses the webpack compilation context directory as root, but this can be changed with the plugin's
+`context` option. Note that this does _not_ affect resources where the `context` option is explicitly passed
+to the loader.
+
+If you're not happy with the built-in web application, you can replace it by providing the `middleware`
+option. This can be either a single connect-/express-style request handler, or an array of multiple such
+functions.
 
 ```js
 // webpack.config.js
 const PdfReactorServerPlugin = require( 'pdfreactor-loader/plugin' );
 
 module.exports = {
+   context: __dirname,
    plugins: [
       new PdfReactorServerPlugin( {
-         // default: random free port
+         // bind to a fixed port instead of a random one
          port: 8099,
-         // default: same as configuration 'context'
-         context: path.join( __dirname, 'pdf-root' )
+         // serve from './pdf-root' instead of the webpack context (__dirname, see above)
+         context: path.join( __dirname, 'pdf-root' ),
+         // remove the default app
+         middleware: []
       } )
    ]
 };

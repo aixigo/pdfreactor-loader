@@ -14,12 +14,22 @@ module.exports = function( options ) {
 
    return {
       apply( compiler ) {
-         const fs = compiler.inputFileSystem;
          const context = options && options.context || compiler.context;
+         const middleware = [];
+
+         if( Array.isArray( options.middleware ) ) {
+            middleware.push.apply( middlware, options.middleware );
+         }
+         else if( 'middlware' in options ) {
+            middleware.push( options.middleware );
+         }
+         else {
+            middlware.push( createApp( options ) );
+         }
 
          compiler.plugin( 'after-environment', () => {
-            server.use( requestHandler( fs, context ) );
-            server.use( createApp( options ) );
+            middleware.unshift( requestHandler( compiler.inputFileSystem, context ) );
+            middleware.forEach( server.use );
          } );
          compiler.plugin( 'watch-run', ( watcher, callback ) => {
             server.listen( err => {
