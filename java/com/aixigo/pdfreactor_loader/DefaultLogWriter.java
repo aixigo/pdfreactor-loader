@@ -13,6 +13,9 @@ import java.text.SimpleDateFormat;
 
 public class DefaultLogWriter implements LogWriter {
 
+   private static String JSLOG_PREFIX = "JSlog:";
+   private static String JSERROR_PREFIX = "JSerror:";
+
    private enum Color {
       RESET( "\033[0m" ),
       BOLD( "\033[1m" ),
@@ -32,21 +35,19 @@ public class DefaultLogWriter implements LogWriter {
    }
 
    public void writeMessage( LogRecord record ) {
-      String message = record.getMessage();
+      String rawMessage = record.getMessage();
       String time = formatMillis( record.getMillis() );
       String level = formatLevel( record.getLevel() );
-      boolean isJsLog = message.startsWith( "JSlog:" );
-      boolean isJsError = message.startsWith( "JSerror:" );
+      String message = formatMessage( rawMessage );
 
-      System.out.print(
-         "PDF: " +
-         time +
-         "\t" +
-         ( ( isJsLog || isJsError ) ? colorize( Color.BGBLUE, level ) : level ) +
-         "\t" +
-         message +
-         "\n"
-      );
+      boolean isJsLog = rawMessage.startsWith( JSLOG_PREFIX );
+      boolean isJsError = rawMessage.startsWith( JSERROR_PREFIX );
+
+      if( isJsLog || isJsError ) {
+         level = colorize( Color.BGBLUE, level );
+      }
+
+      System.out.print( "PDF: " + time + "\t" + level + "\t" + message + "\n" );
    }
 
    private String formatMillis( long millis ) {
@@ -63,6 +64,18 @@ public class DefaultLogWriter implements LogWriter {
          return colorize( Color.YELLOW, level.getName() );
       }
       return level.getName();
+   }
+
+   private String formatMessage( String message ) {
+      if( message.startsWith( JSLOG_PREFIX ) ) {
+         return colorize( Color.BOLD, JSLOG_PREFIX.toUpperCase() ) +
+            message.substring( JSLOG_PREFIX.length() );
+      }
+      if( message.startsWith( JSERROR_PREFIX ) ) {
+         return colorize( Color.RED, JSERROR_PREFIX.toUpperCase() ) +
+            message.substring( JSERROR_PREFIX.length() );
+      }
+      return message;
    }
 
    private String colorize( Color color, String string ) {
