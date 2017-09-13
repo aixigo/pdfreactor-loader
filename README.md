@@ -115,6 +115,14 @@ java.classpath.push( 'target/dependency/pdfreactor.jar' );
 module.exports = { /* webpack config here */ };
 ```
 
+If you want to use the logging feature, you should make sure the logger class can be found. There's a
+`classpath` file you can import to get the correct classpath entries:
+
+```js
+const java = require( 'java' );
+java.classpath.push( ...require( 'pdfreactor-loader/classpath' ) );
+```
+
 
 ## Q&A:
 
