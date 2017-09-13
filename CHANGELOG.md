@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v0.3.0
+
 - [#4](https://github.com/aixigo/pdfreactor-loader/issues/4): Mention `classpath` export in README.md
 - [#8](https://github.com/aixigo/pdfreactor-loader/issues/8): Improve the `pdfreactor-laoder/plugin` notification implementation
 - [#7](https://github.com/aixigo/pdfreactor-loader/issues/7): Fix problematic logging when running multiple instances in parallel

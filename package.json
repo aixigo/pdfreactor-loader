@@ -1,6 +1,6 @@
 {
   "name": "pdfreactor-loader",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Render HTML to PDF with PDFreactor",
   "main": "index.js",
   "repository": "git@github.com:aixigo/pdfreactor-loader.git",
@@ -12,8 +12,7 @@
     "posttest": "eslint index.js classpath.js plugin.js lib/ test/"
   },
   "dependencies": {
-    "loader-utils": "^1.1.0",
-    "tapable": "^0.2.8"
+    "loader-utils": "^1.1.0"
   },
   "peerDependencies": {
     "java": "^0.8.0"
