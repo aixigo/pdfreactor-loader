@@ -4,6 +4,7 @@
  * https://opensource.org/licenses/MIT
  */
 const path = require( 'path' );
+const http = require( 'http' );
 const createServer = require( './lib/server' );
 const createApp = require( './lib/app' );
 const loaderPath = require.resolve( __dirname );
@@ -25,6 +26,23 @@ module.exports = function( options ) {
          else {
             middleware.push( createApp( options ) );
          }
+
+         server.notify = ( entry, callback ) => {
+            const address = server.address();
+            const req = http.request( {
+               method: 'POST',
+               port: address.port,
+               family: address.family,
+               path: options.api || '/',
+               headers: {
+                  'content-type': 'application/json'
+               }
+            }, () => callback( null ) );
+
+            req.on( 'error', callback );
+            req.write( JSON.stringify( entry ) );
+            req.end();
+         };
 
          compiler.plugin( 'after-environment', () => {
             middleware.unshift( requestHandler( compiler.inputFileSystem, context ) );
@@ -49,11 +67,20 @@ module.exports = function( options ) {
          } );
          compiler.plugin( 'compilation', compilation => {
             compilation.plugin( 'normal-module-loader', ( loaderContext, module ) => {
-               if( module.loaders.some( obj => obj.loader === loaderPath ) ) {
+               const index = module.loaders.findIndex( obj => obj.loader === loaderPath );
+               if( index >= 0 ) {
                   loaderContext.options = Object.assign(
                      loaderContext.options || {},
                      options,
                      { server, context }
+                  );
+
+                  module.loaders.splice(
+                     index,
+                     1,
+                     { loader: require.resolve( './lib/post' ) },
+                     module.loaders[ index ],
+                     { loader: require.resolve( './lib/pre' ) }
                   );
                }
             } );

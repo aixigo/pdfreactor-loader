@@ -5,7 +5,6 @@
  */
 const path = require( 'path' );
 const java = require( 'java' );
-const http = require( 'http' );
 const crypto = require( 'crypto' );
 const loaderUtils = require( 'loader-utils' );
 const createServer = require( './lib/server' );
@@ -19,6 +18,7 @@ const LEVEL = 'java.util.logging.Level';
 const LOGGER = 'java.util.logging.Logger';
 const LOGGING_HANDLER = 'com.aixigo.pdfreactor_loader.LoggingHandler';
 const DEFAULT_LOG_WRITER = 'com.aixigo.pdfreactor_loader.DefaultLogWriter';
+const DEFAULT_LOG_LEVEL = 'SEVERE';
 
 const NONCE_HEADER = 'X-PDFreactor-Loader-Nonce';
 const LOGGER_ERROR_MESSAGE = ( // eslint-disable-next-line indent
@@ -47,6 +47,7 @@ module.exports = function( source ) {
       path.resolve( this.context, options.context ) :
       ( this.options.context || this.context );
    const license = options.license || this.options.license;
+   const log = getLogLevel( options.log, this.options.log, DEFAULT_LOG_LEVEL );
    const server = createServer( this.options.server || {} );
    const classpath = Array.isArray( options.classpath ) ? options.classpath : [ options.classpath ];
    const hash = crypto.createHash( 'sha256' );
@@ -104,14 +105,16 @@ module.exports = function( source ) {
             }
          },
          ( licenseKey, callback ) => {
-            try {
-               pdfConfig.setLoggerSync( provideLogger() );
-            }
-            catch( e ) {
-               /* eslint-disable no-console */
-               console.warn( LOGGER_ERROR_MESSAGE );
-               console.info( '   Underlying Exception:', e );
-               /* eslint-enable no-console */
+            if( log ) {
+               try {
+                  pdfConfig.setLoggerSync( provideLogger( log ) );
+               }
+               catch( e ) {
+                  /* eslint-disable no-console */
+                  console.warn( LOGGER_ERROR_MESSAGE );
+                  console.info( '   Underlying Exception:', e );
+                  /* eslint-enable no-console */
+               }
             }
             pdfConfig.setLogLevelSync( java.import( CONFIGURATION ).LogLevel.DEBUG );
             pdfConfig.setEnableDebugModeSync( true );
@@ -136,7 +139,8 @@ module.exports = function( source ) {
          },
          ( bytes, callback ) => {
             const buffer = Buffer.from( bytes );
-            const entry = {
+
+            server.notify( {
                name: path.basename( this.resourcePath, path.extname( this.resourcePath ) ),
                time: Date.now(),
                nonce: loaderNonce,
@@ -152,9 +156,7 @@ module.exports = function( source ) {
                      data: Buffer.from( source ).toString( BASE64 )
                   }
                ]
-            };
-
-            postResult( server.address(), entry, err => callback( err, buffer ) );
+            }, err => callback( err, buffer ) );
          }
       ], ( err, buffer ) => {
          this.callback( err, buffer );
@@ -167,17 +169,17 @@ module.exports.plugin = PdfReactorServerPlugin;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function provideLogger() {
+function provideLogger( level ) {
    const logger = java.import( LOGGER ).getLoggerSync( 'pdfreactor' );
    if( !logger.getHandlersSync().some( h => java.instanceOf( h, LOGGING_HANDLER ) ) ) {
-      configureLogger( logger );
+      configureLogger( logger, level );
    }
    return logger;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function configureLogger( logger ) {
+function configureLogger( logger, level ) {
    // The parent handler would simply print the log messages to console without proper formatting.
    // Hence we disable it.
    const loggingHandler = java.newInstanceSync( LOGGING_HANDLER );
@@ -186,7 +188,26 @@ function configureLogger( logger ) {
 
    logger.setUseParentHandlersSync( false );
    logger.addHandlerSync( loggingHandler );
-   logger.setLevelSync( java.import( LEVEL ).FINEST );
+   logger.setLevelSync( java.import( LEVEL )[ level ] );
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function getLogLevel() {
+   const options = [].slice.apply( arguments );
+
+   for( let i = 0; i < options.length; i++ ) {
+      if( options[ i ] === true ) {
+         return 'FINEST';
+      }
+      if( options[ i ] === false ) {
+         return false;
+      }
+      if( typeof options[ i ] === 'string' ) {
+         return options[ i ];
+      }
+   }
+   return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -208,19 +229,3 @@ function pipe( fns, callback ) {
    }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function postResult( address, entry, callback ) {
-   const req = http.request( {
-      method: 'POST',
-      port: address.port,
-      family: address.family,
-      path: '/',
-      headers: {
-         'content-type': 'application/json'
-      }
-   }, () => callback( null ) );
-   req.on( 'error', callback );
-   req.write( JSON.stringify( entry ) );
-   req.end();
-}

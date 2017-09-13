@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 
 public class DefaultLogWriter implements LogWriter {
 
+   private static DateFormat timeFormat = new SimpleDateFormat( "HH:mm:ss.SSS" );
    private static String JSLOG_PREFIX = "JSlog:";
    private static String JSERROR_PREFIX = "JSerror:";
 
@@ -52,8 +53,7 @@ public class DefaultLogWriter implements LogWriter {
 
    private String formatMillis( long millis ) {
       Date date = new Date( millis );
-      DateFormat format = new SimpleDateFormat( "HH:mm:ss.SSS");
-      return format.format( date );
+      return timeFormat.format( date );
    }
 
    private String formatLevel( Level level ) {

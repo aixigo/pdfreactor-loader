@@ -14,7 +14,7 @@ describe( 'pdfreactor-loader', () => {
 
    it( 'runs', done => {
       runLoader( {
-         query: '?context=' + __dirname + '&classpath=' + __dirname + '/pdfreactor.jar',
+         query: '?context=' + __dirname + '&+log&classpath=' + __dirname + '/pdfreactor.jar',
          callback( err, source ) {
             if( err ) {
                done( err );

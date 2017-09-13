@@ -7,12 +7,13 @@
   "author": "Jonas Pommerening <jonas.pommerening@gmail.com>",
   "license": "MIT",
   "scripts": {
-     "pretest": "test -f test/pdfreactor.jar || ( curl -Lo test/pdfreactor.zip 'http://www.pdfreactor.com/download/get/?product=pdfreactor&type=library&jre=false' && unzip -n -d test test/pdfreactor.zip pdfreactor.jar )",
-     "test": "mocha",
-     "posttest": "eslint index.js classpath.js plugin.js lib/ test/"
+    "pretest": "test -f test/pdfreactor.jar || ( curl -Lo test/pdfreactor.zip 'http://www.pdfreactor.com/download/get/?product=pdfreactor&type=library&jre=false' && unzip -n -d test test/pdfreactor.zip pdfreactor.jar )",
+    "test": "mocha",
+    "posttest": "eslint index.js classpath.js plugin.js lib/ test/"
   },
   "dependencies": {
-    "loader-utils": "^1.1.0"
+    "loader-utils": "^1.1.0",
+    "tapable": "^0.2.8"
   },
   "peerDependencies": {
     "java": "^0.8.0"
