@@ -91,9 +91,9 @@ module.exports = {
 ## Logging
 
 By default, only severe errors are logged. You can use the `log` option to override this.
-Use `java.util.logging.Level` keys to specify the desired or `false` (disable all logging, even of fatal
-PDFreactor errors) or `true` (for the finest log level). If you're using loader options in you import statement,
-you can use the `+` and `-` shorthands for boolean values:
+Use `java.util.logging.Level` keys to specify the desired log level or `false` (disable all logging, even of
+fatal PDFreactor errors) or `true` (for the finest log level). If you're using loader options in you import
+statement, you can use the `+` and `-` shorthands for boolean values:
 
 ```js
 import withoutLogging from 'pdfreactor-loader?-log!without-logging.html';
