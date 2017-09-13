@@ -1,3 +1,5 @@
 /node_modules
 /yarn.lock
 *.jar
+*.zip
+hs_err*.log
