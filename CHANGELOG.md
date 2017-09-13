@@ -2,6 +2,8 @@
 
 ## Last Changes
 
+- [#9](https://github.com/aixigo/pdfreactor-loader/issues/9): Fix server startup and teardown inconsistencies
+
 
 ## v0.3.0
 

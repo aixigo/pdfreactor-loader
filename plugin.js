@@ -16,6 +16,7 @@ module.exports = function( options ) {
       apply( compiler ) {
          const context = ( options && options.context ) || compiler.context;
          const middleware = [];
+         let watching = false;
 
          if( Array.isArray( options.middleware ) ) {
             middleware.push.apply( middleware, options.middleware );
@@ -49,6 +50,8 @@ module.exports = function( options ) {
             middleware.forEach( server.use );
          } );
          compiler.plugin( 'watch-run', ( watcher, callback ) => {
+            watching = true;
+
             server.listen( err => {
                const baseUrl = `http://localhost:${server.address().port}/`;
                if( !err ) {
@@ -63,7 +66,14 @@ module.exports = function( options ) {
             callback();
          } );
          compiler.plugin( 'before-run', ( compiler, callback ) => {
-            server.listen( callback );
+            if( !watching ) {
+               server.listen( callback );
+            }
+         } );
+         compiler.plugin( 'done', stats => {
+            if( !watching ) {
+               server.close();
+            }
          } );
          compiler.plugin( 'compilation', compilation => {
             compilation.plugin( 'normal-module-loader', ( loaderContext, module ) => {
