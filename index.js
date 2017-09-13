@@ -136,30 +136,9 @@ module.exports = function( source ) {
             const address = server.address();
             pdfConfig.setBaseURLSync( `http://localhost:${address.port}` );
             pdfRenderer.convertAsBinary( pdfConfig, callback );
-         },
-         ( bytes, callback ) => {
-            const buffer = Buffer.from( bytes );
-
-            server.notify( {
-               name: path.basename( this.resourcePath, path.extname( this.resourcePath ) ),
-               time: Date.now(),
-               nonce: loaderNonce,
-               data: [
-                  {
-                     type: 'application/pdf',
-                     encoding: BASE64,
-                     data: buffer.toString( BASE64 )
-                  },
-                  {
-                     type: 'text/html',
-                     encoding: BASE64,
-                     data: Buffer.from( source ).toString( BASE64 )
-                  }
-               ]
-            }, err => callback( err, buffer ) );
          }
-      ], ( err, buffer ) => {
-         this.callback( err, buffer );
+      ], ( err, bytes ) => {
+         this.callback( err, Buffer.from( bytes ) );
          server.close();
       } );
    } );
